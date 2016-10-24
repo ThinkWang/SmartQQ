@@ -2151,9 +2151,10 @@ namespace SmartQQLib.API
                 Debug.WriteLine(e);
             }
             return null;
-        }        /// <summary>
-                 /// 清楚cookie
-                 /// </summary>
+        }        
+        /// <summary>
+        /// 清楚cookie
+        /// </summary>
         internal void ClearCookies()
         {
             http.InitCookies();

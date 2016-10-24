@@ -24,13 +24,13 @@ namespace SmartQQ
         {
             qc = new SmartQQClient();
 
-            qc.BeginReLogin = () => {
+            qc.OnBeginReLogin = () => {
                 RunInMainthread(() => {
                     //QrCodePicture.Image = UserLogo;
                     LoginLabel.Text = "自动登录中";
                 });
             };
-            qc.ReLoginFail = () => {
+            qc.OnReLoginFail = () => {
                 RunInMainthread(() => {
                     //QrCodePicture.Image = UserLogo;
                     LoginLabel.Text = "自动登录失败，正在获取二维码";
@@ -99,5 +99,9 @@ namespace SmartQQ
             }));
         }
 
+        private void LoginForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            //qc.Logout();
+        }
     }
 }

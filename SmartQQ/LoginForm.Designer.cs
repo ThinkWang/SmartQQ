@@ -74,6 +74,7 @@
             this.Controls.Add(this.QrCodePicture);
             this.Name = "LoginForm";
             this.Text = "登陆框";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.LoginForm_FormClosing);
             this.Load += new System.EventHandler(this.LoginForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.QrCodePicture)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.LogoPicture)).EndInit();

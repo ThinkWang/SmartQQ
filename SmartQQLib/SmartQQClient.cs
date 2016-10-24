@@ -15,28 +15,30 @@ using System.Windows.Forms;
 
 namespace SmartQQLib
 {
+    /// <summary>
+    /// 运行QQClient主逻辑,推荐放在独立的线程中执行这个方法
+    /// </summary>
     public class SmartQQClient
     {
+        private SmartQQAPIService api = null;
+        public static string cookiesFileName = "cookie.data";
         public SmartQQClient()
         {
             api = new SmartQQAPIService(new HttpProvider());
         }
-        private SmartQQAPIService api = null;
 
-        public static string cookiesFileName = "cookie.data";
-
+        #region 登录 登出
         public bool IsLogin { get; private set; }
 
         internal Cookies LoginCookies;
-
 
         //callback
         public Action<Image> OnGetQRCodeImage;
         public Action OnScanImage;
         //public Action<Image> OnVerifyImage;
 
-        public Action BeginReLogin;
-        public Action ReLoginFail;
+        public Action OnBeginReLogin;
+        public Action OnReLoginFail;
 
         public Action OnVerifyImage;
         public Action OnVerifySucess;
@@ -44,13 +46,9 @@ namespace SmartQQLib
         public Action OnInitComplate;
         public Action OnLoginOut;
 
-
         /// <summary>
-        /// 运行QQClient主逻辑,推荐放在独立的线程中执行这个方法
+        ///利用cookie文件登录
         /// </summary>
-
-        // ----------0.利用cookie文件登录
-
         public void ReLink()
         {
             string loginuser = api.ReadTextFile(Environment.CurrentDirectory, "user\\user.ini");
@@ -63,7 +61,7 @@ namespace SmartQQLib
                 {
 
                     LoginCookies = JsonConvert.DeserializeObject<Cookies>(File.ReadAllText(Path.Combine(Environment.CurrentDirectory + "\\user\\" + loginuser, cookiesFileName)));
-                    BeginReLogin?.Invoke();
+                    OnBeginReLogin?.Invoke();
                     string Ptwebqq = LoginCookies.ptwebqq;
                     string Status = LoginCookies.status;
                     string Skey = LoginCookies.skey;
@@ -111,7 +109,7 @@ namespace SmartQQLib
                             else
                             {
                                 Debug.Write("返回值错误 errmsg:error!!!,retcode:100001");
-                                ReLoginFail?.Invoke();
+                                OnReLoginFail?.Invoke();
 
                                 Login();
                             }
@@ -124,7 +122,7 @@ namespace SmartQQLib
                     else
                     {
                         Debug.Write("Cookie文件无效");
-                        ReLoginFail?.Invoke();
+                        OnReLoginFail?.Invoke();
 
                         Login();
                     }
@@ -132,7 +130,7 @@ namespace SmartQQLib
                 else
                 {
                     Debug.Write("Cookie文件不存在");
-                    ReLoginFail?.Invoke();
+                    OnReLoginFail?.Invoke();
 
                     Login();
                 }
@@ -141,12 +139,15 @@ namespace SmartQQLib
             else
             {
                 Debug.Write("user.ini文件无效");
-                ReLoginFail?.Invoke();
+                OnReLoginFail?.Invoke();
                 Login();
             }
 
         }
 
+        /// <summary>
+        /// 二维码登录
+        /// </summary>
         public void Login()
         {
             // 启动流程
@@ -242,6 +243,7 @@ namespace SmartQQLib
                     Debug.Write("psessionid=" + LoginResult.psessionid);
                     LoginResult.qq = JoUinAndPsessionid["result"]["uin"].ToString();
                     Debug.Write("uin=" + LoginResult.qq);
+                    LoginCookies.qq = LoginResult.qq;
 
                     string[] namelist = { "skey", "uin", "p_skey", "p_uin" };
 
@@ -259,7 +261,6 @@ namespace SmartQQLib
 
                     LoginCookies.p_uin = CookieList[3].ToString();
                     Debug.Write("p_uin=" + LoginCookies.p_uin);
-
 
                     if (!Directory.Exists(Environment.CurrentDirectory + "\\user\\" + LoginResult.qq))
                     {
@@ -283,7 +284,7 @@ namespace SmartQQLib
         /// </summary>
         public void Logout()
         {
-            //api.ClearCookies();
+            api.ClearCookies();
             OnLoginOut?.Invoke();
             Debug.Write("账号已注销");
             File.Delete(Path.Combine(Environment.CurrentDirectory + "\\user\\" + LoginResult.qq, cookiesFileName));
@@ -297,12 +298,15 @@ namespace SmartQQLib
         {
             api._change_state(state, LoginResult.psessionid);
         }
+        #endregion
 
-
+        #region 收发消息
         public void Poll2()
         {
             api._recv_message(LoginResult.ptwebqq, LoginResult.psessionid);
         }
+
+        #endregion
     }
 }
 
