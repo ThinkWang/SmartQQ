@@ -64,9 +64,16 @@ namespace SmartQQ
                     //MessageBox.Show("skey=" + qc.LoginCookies.skey);
                     //MessageBox.Show("psessionid=" + qc.loingresult.psessionid);
                     //MessageBox.Show("uin=" + qc.LoginCookies.uin.ToString());
+                    RunAsync(() =>
+                    {
+                        qc.Poll2();
+                    });
                 });
             };
 
+            qc.OnRecvMsg = (msg) => {
+                File.AppendAllText(Application.StartupPath + "\\msg.txt", $"{DateTime.Now}\n{msg.poll_type}:{msg.content}\n\n");
+            };
 
             RunAsync(() => {
                 if (File.Exists(Application.StartupPath + "\\user\\user.ini"))

@@ -51,6 +51,7 @@
     <Compile Include="Model\GroupList.cs" />
     <Compile Include="Model\GroupMembers.cs" />
     <Compile Include="API\Result\Cookies.cs" />
+    <Compile Include="Model\RecvMsg.cs" />
     <Compile Include="Model\User.cs" />
     <Compile Include="API\Result\LoginResult.cs" />
     <Compile Include="API\SmartQQAPIService.cs" />

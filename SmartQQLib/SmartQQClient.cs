@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using SmartQQLib.API;
 using SmartQQLib.Http;
+using SmartQQLib.Model;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -301,11 +302,66 @@ namespace SmartQQLib
         #endregion
 
         #region 收发消息
+        public Action<RecvMsg> OnRecvMsg;
+        public Action<RecvMsg> OnMessage;
+        public Action<RecvMsg> OnGroupMessage;
+        public Action<RecvMsg> OnDiscussMessage;
+        public bool IsPoll = true;
         public void Poll2()
         {
-            api._recv_message(LoginResult.ptwebqq, LoginResult.psessionid);
-        }
+            Debug.Write("开始收消息");
+            while (IsPoll)
+            {
+                var jsonMsg = api._recv_message(LoginResult.ptwebqq, LoginResult.psessionid);
+                if (!string.IsNullOrEmpty(jsonMsg) && jsonMsg.StartsWith("{"))
+                {
+                    JObject Jomsg = (JObject)JsonConvert.DeserializeObject(jsonMsg);
+                    if (Jomsg["retcode"].ToString() == "0")
+                    {//成功
+                        var result = Jomsg["result"].ToList();
+                        foreach (var preMsg in result)
+                        {
+                            //忽略字体，忽略表情
+                            var contents = preMsg["value"]["content"].ToList().Skip(1).Where(x => x.Type == JTokenType.String).ToList();
+                            var strContent = string.Join("", contents);
 
+                            RecvMsg msg = new RecvMsg();
+                            msg.poll_type = preMsg["poll_type"].ToString();
+                            msg.content = strContent;
+
+                            if ("message".Equals(msg.poll_type))
+                            {
+                                OnMessage?.Invoke(msg);
+                            }
+                            else if ("group_message".Equals(msg.poll_type))
+                            {
+                                OnGroupMessage?.Invoke(msg);
+                            }
+                            else if ("discu_message".Equals(msg.poll_type))
+                            {
+                                OnDiscussMessage?.Invoke(msg);
+                            }
+
+                            OnRecvMsg?.Invoke(msg);
+                        }
+
+                    }
+                    else
+                    {
+                        Debug.Write("收消息失败：" + jsonMsg);
+                        IsPoll = false;
+                    }
+                }
+                else
+                {
+                    Debug.Write("没有收到消息");
+                }
+
+            }
+            Debug.Write("停止收消息");
+
+
+        }
         #endregion
     }
 }
